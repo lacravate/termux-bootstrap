@@ -1,0 +1,24 @@
+if [ -z $TERMUX_BOOTSTRAP_INSTALL_DIR ]; then
+  export TERMUX_BOOTSTRAP_INSTALL_DIR=$HOME/termux-bootstrap
+fi
+
+I=$TERMUX_BOOTSTRAP_INSTALL_DIR
+. $I/default_command.sh
+
+DEFAULT_COMMAND="bash -l"
+command=$(default_command $@)
+
+if [ $(whoami) = "root" ]; then
+  if [ -z $(which mksu) ]; then
+    for e in $(cat $I/exports.txt); do
+      export $e
+    done
+
+    termux_path=/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:$I
+    export PATH=$termux_path:$PATH
+  fi
+
+  $command
+else
+  su -c "HOME=$HOME $(which mksu) $command"
+fi
