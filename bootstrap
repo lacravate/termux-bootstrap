@@ -1,0 +1,20 @@
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+export LD_PRELOAD=
+
+root=$1
+shift
+
+if [ -z "$root" ] || [ ! -d $root ] ; then
+  echo "$0 : First argument \"$root\"must be an existing chrooted directory"
+  exit
+fi
+
+. $TERMUX_BOOTSTRAP_INSTALL_DIR/default_command.sh
+. $TERMUX_BOOTSTRAP_INSTALL_DIR/boot_filesystem.sh ''
+
+[ -z "$(has_processes)" ] && bind_device
+
+DEFAULT_COMMAND="/bin/bash -l"
+chroot $root $(default_command $@)
+
+[ -z "$(has_processes $root)" ] && unbind_device
