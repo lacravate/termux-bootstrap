@@ -1,0 +1,46 @@
+name=$(basename $1)
+. $1
+shift
+
+if [ ! -z $image ]; then
+  printf "Mounting disk image... "
+
+  mksu boot_filesystem.sh $name $image mount_image_root
+  root=$(mksu boot_filesystem.sh $name $image define_image_root)
+
+  echo Done.
+fi
+
+if [ ! -z $1 ] && [ $1 = '--ramfs' ]; then
+  printf "Mounting ramdisk, and copying system to it. This may take a while... "
+
+  fs=$root
+  mksu boot_filesystem.sh $name $root ram_fs
+  root=$(mksu boot_filesystem.sh $name $root define_ram_root)
+  shift
+
+  echo Done.
+fi
+
+echo
+echo "Ready to bootstrap \"$name\".
+
+If it leads you to a (chrooted) shell, just type \"exit\" to exit.
+This script will end up unsetting anything it set."
+
+if [ ! -z $1 ] && [ $1 = '--boot' ]; then
+  echo "Executing configured commands if any in current shell... "
+  for command in $termux; do $command; done
+
+  echo "Executing configured commands if any in chrooted environment... "
+  for command in $bootstrap; do mksu bootstrap $root $command; done
+else
+  mksu bootstrap $root $@
+fi
+
+if [ ! -z $fs ] && [ -z "$(mksu boot_filesystem.sh $name $root has_processes)" ] && [ -z "$(mksu boot_filesystem.sh $name $fs has_processes)" ]; then
+  printf "$fs can be dismounted,
+this may hang a little though... "
+  squeak=$(mksu boot_filesystem.sh $name $fs unbind_device)
+  echo Done.
+fi
