@@ -7,3 +7,11 @@ default_command() {
 
   echo $command
 }
+
+file_lookup() {
+  if [ ! -e $2 ]; then
+    for path in $HOME/bootstrap/$2 /sdcard/bootstrap/$2; do
+      [ -e $path ] && eval "$1=$path"
+    done
+  fi
+}
