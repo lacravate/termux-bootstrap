@@ -1,9 +1,16 @@
-name=$(basename $1)
-. $1
+. $(dirname $(mksu which bootstrap))/default_command.sh
+
+config=$1
+file_lookup config $config
+
+name=$(basename $config)
+. $config
 shift
 
 if [ ! -z $image ]; then
   printf "Mounting disk image... "
+
+  file_lookup image $image
 
   mksu boot_filesystem.sh $name $image mount_image_root
   root=$(mksu boot_filesystem.sh $name $image define_image_root)
@@ -14,6 +21,8 @@ fi
 if [ ! -z $1 ] && [ $1 = '--ramfs' ]; then
   printf "Mounting ramdisk, and copying system to it. This may take a while... "
 
+  file_lookup root $root
+
   fs=$root
   mksu boot_filesystem.sh $name $root ram_fs
   root=$(mksu boot_filesystem.sh $name $root define_ram_root)
@@ -21,6 +30,8 @@ if [ ! -z $1 ] && [ $1 = '--ramfs' ]; then
 
   echo Done.
 fi
+
+file_lookup root $root
 
 echo
 echo "Ready to bootstrap \"$name\".
